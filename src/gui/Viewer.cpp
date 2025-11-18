@@ -36,6 +36,7 @@ Viewer::Viewer()
 		1
 #endif
 	),
+	mPixelRatio(1.0f),
 	meshVertices(nse::gui::VertexBuffer), meshIndices(nse::gui::IndexBuffer),
 	singularityPositions(nse::gui::VertexBuffer), singularityColors(nse::gui::VertexBuffer), singularityCount(0),
 	wireframeIndices(nse::gui::IndexBuffer),
@@ -46,6 +47,8 @@ Viewer::Viewer()
 	selectedRegion(-1),
 	brokenArcsIndices(nse::gui::IndexBuffer)
 {
+	mPixelRatio = this->pixelRatio();
+
 	ShaderPool::Instance()->CompileAll();
 
 	SetupGUI();
@@ -70,6 +73,11 @@ bool Viewer::resizeEvent(const Eigen::Vector2i& size)
 {
 	AbstractViewer::resizeEvent(size);
 
+	mPixelRatio = this->pixelRatio();
+
+	int physicalWidth = static_cast<int>(width() * mPixelRatio);
+	int physicalHeight = static_cast<int>(height() * mPixelRatio);
+
 	GLenum status;
 
 #ifndef LAPTOP_COMPAT
@@ -79,24 +87,24 @@ bool Viewer::resizeEvent(const Eigen::Vector2i& size)
 
 	glBindTexture(textureTarget, colorTexture);
 	if (nSamples == 1)
-		glTexImage2D(textureTarget, 0, GL_RGBA8, width(), height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+		glTexImage2D(textureTarget, 0, GL_RGBA8, physicalWidth, physicalHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
 	else
-		glTexImage2DMultisample(textureTarget, nSamples, GL_RGBA8, width(), height(), true);
+		glTexImage2DMultisample(textureTarget, nSamples, GL_RGBA8, physicalWidth, physicalHeight, true);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, textureTarget, colorTexture, 0);
 
 	glBindTexture(textureTarget, pickingTexture);
 	if (nSamples == 1)
-		glTexImage2D(textureTarget, 0, GL_R32I, width(), height(), 0, GL_RED_INTEGER, GL_INT, nullptr);
+		glTexImage2D(textureTarget, 0, GL_R32I, physicalWidth, physicalHeight, 0, GL_RED_INTEGER, GL_INT, nullptr);
 	else
-		glTexImage2DMultisample(textureTarget, nSamples, GL_R32I, width(), height(), true);
+		glTexImage2DMultisample(textureTarget, nSamples, GL_R32I, physicalWidth, physicalHeight, true);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, textureTarget, pickingTexture, 0);
 	glBindTexture(textureTarget, 0);
 
 	glBindRenderbuffer(GL_RENDERBUFFER, depthBuffer);
 	if (nSamples == 1)
-		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width(), height());
+		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, physicalWidth, physicalHeight);
 	else
-		glRenderbufferStorageMultisample(GL_RENDERBUFFER, nSamples, GL_DEPTH24_STENCIL8, width(), height());
+		glRenderbufferStorageMultisample(GL_RENDERBUFFER, nSamples, GL_DEPTH24_STENCIL8, physicalWidth, physicalHeight);
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depthBuffer);
 	glBindRenderbuffer(GL_RENDERBUFFER, 0);
 
@@ -114,7 +122,7 @@ bool Viewer::resizeEvent(const Eigen::Vector2i& size)
 	glBindTexture(GL_TEXTURE_2D, pickingTextureSinglePixel);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_R32I, 1, 1, 0, GL_RED_INTEGER, GL_INT, nullptr);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, pickingTextureSinglePixel, 0);
-	
+
 	status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 	if (status != GL_FRAMEBUFFER_COMPLETE)
 	{
@@ -1100,7 +1108,12 @@ void Viewer::UploadSingularities()
 
 int32_t Viewer::GetPickingIndex(const Eigen::Vector2i p) const
 {	
-	if (p.x() >= 0 && p.y() >= 0 && p.x() < width() && p.y() < height())
+	int physicalX = static_cast<int>(p.x() * mPixelRatio);
+	int physicalY = static_cast<int>(p.y() * mPixelRatio);
+	int physicalWidth = static_cast<int>(width() * mPixelRatio);
+	int physicalHeight = static_cast<int>(height() * mPixelRatio);
+
+	if (physicalX >= 0 && physicalY >= 0 && physicalX < physicalWidth && physicalY < physicalHeight)
 	{
 		glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo);
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fboSinglePixel);
@@ -1395,7 +1408,11 @@ void Viewer::drawContents()
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 	glReadBuffer(GL_COLOR_ATTACHMENT0);
 	glDrawBuffer(GL_BACK);
-	glBlitFramebuffer(0, 0, width(), height(), 0, 0, width(), height(), GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT, GL_NEAREST);
+
+	int physicalWidth = static_cast<int>(width() * mPixelRatio);
+	int physicalHeight = static_cast<int>(height() * mPixelRatio);
+	glBlitFramebuffer(0, 0, physicalWidth, physicalHeight, 0, 0, physicalWidth, physicalHeight,
+		GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT, GL_NEAREST);
 	
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 #endif
@@ -1408,8 +1425,11 @@ void Viewer::DrawTextIfNotHidden(const Eigen::Vector4f& pos, const Eigen::Matrix
 	projectedPosition.x() = (projectedPosition.x() + 1) / 2 * width();
 	projectedPosition.y() = (1 - projectedPosition.y()) / 2 * height();
 
-	if (projectedPosition.x() < 0 || projectedPosition.x() >= width()
-		|| projectedPosition.y() < 0 || projectedPosition.y() >= height())
+	int physicalX = static_cast<int>(projectedPosition.x() * mPixelRatio);
+	int physicalY = static_cast<int>(projectedPosition.y() * mPixelRatio);
+
+	if (physicalX < 0 || physicalX >= static_cast<int>(width() * mPixelRatio)
+		|| physicalY < 0 || physicalY >= static_cast<int>(height() * mPixelRatio))
 		return;
 
 	Eigen::Vector3f reprojectedPosition;

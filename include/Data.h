@@ -103,7 +103,7 @@ public:
 	//Loads a mesh from a file and prepares it for processing.
 	//filename - the file to load
 	//mergeTriangulatedQuads - try to merge neighboring triangles in the mesh if their union becomes near rectangular
-	//mergeAngleTreshold - angle threshold for triangle merging (deviation from 90°) in radians
+	//mergeAngleTreshold - angle threshold for triangle merging (deviation from 90ï¿½) in radians
 	void LoadMesh(const std::string & filename, bool mergeTriangulatedQuads, float mergeAngleThreshold);
 
 	//Loads a mesh for the sole purpose of visualization. No processing can be performed on this mesh.

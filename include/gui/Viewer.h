@@ -131,4 +131,6 @@ private:
 	std::chrono::steady_clock::duration discreteOptimizationTimeLimit;
 
 	int mipLevel;
+
+	float mPixelRatio;
 };
