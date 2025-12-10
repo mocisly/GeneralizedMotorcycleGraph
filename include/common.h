@@ -52,7 +52,7 @@ extern bool IsToVertexSingularity(HEMesh::HalfedgeHandle h, const HEMesh& mesh);
 extern void CatmullClarkSubdivide(FaceList& F, Matrix3Xf& V, std::vector<std::vector<unsigned int>>& subdivisionInfo);
 
 //Merges neighboring triangles in the given mesh if their union becomes a rectangle.
-//cosAngleThreshold - specifies the angle tolerance for the final quads (deviation from 90°)
+//cosAngleThreshold - specifies the angle tolerance for the final quads (deviation from 90ï¿½)
 extern void MergeTriangulatedQuads(FaceList& F, const Matrix3Xf& V, float cosAngleThreshold);
 
 //Represents a possible continuation for a motorcycle path

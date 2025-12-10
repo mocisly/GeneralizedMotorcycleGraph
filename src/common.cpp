@@ -312,7 +312,7 @@ void FindPossibleContinuations(const HEMesh& mesh, HEMesh::HalfedgeHandle edge, 
 	auto dir1 = mesh.calc_edge_vector(edge);
 	ProjectToTangentSpace(dir1, vertexNormal); dir1.normalize();
 
-	//outSide is true if h1 comes before h2 in an ordering of the edges around vertexNormal (having angle less than 180°)
+	//outSide is true if h1 comes before h2 in an ordering of the edges around vertexNormal (having angle less than 180ï¿½)
 	auto calcDot = [&](HEMesh::HalfedgeHandle h2)
 	{
 		auto dir2 = mesh.calc_edge_vector(h2);

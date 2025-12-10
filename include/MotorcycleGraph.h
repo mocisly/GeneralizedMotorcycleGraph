@@ -33,12 +33,12 @@ public:
 		//saves the locations on the path where other motorcycles crashed into this motorcycle
 		std::set<size_t> crashesOnPath; 
 
-		//Index of a motorcycle that continues in a 180° angle (not a 90° angle as usual) at
+		//Index of a motorcycle that continues in a 180ï¿½ angle (not a 90ï¿½ angle as usual) at
 		//the start of this motorcycle. This happens when two motorcycles collide head-on or 
 		//if a valence-2 singularity is introduced. A value of (size_t)-1 specifies no continuation.
 		size_t straightContinuationStart = (size_t)-1;
 
-		//Index of a motorcycle that continues in a 180° angle (not a 90° angle as usual) at
+		//Index of a motorcycle that continues in a 180ï¿½ angle (not a 90ï¿½ angle as usual) at
 		//the end of this motorcycle. This happens when two motorcycles collide head-on or 
 		//if a valence-2 singularity is introduced. A value of (size_t)-1 specifies no continuation.
 		size_t straightContinuationEnd = (size_t)-1;
